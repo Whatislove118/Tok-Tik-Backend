@@ -191,6 +191,6 @@ def get_comments(request: Request):
 def like_comments(request: Request):
     comment_id = request.data.get('id')
     comment = VideoComments.objects.get(id=comment_id)
-    comment.likes+=1
+    comment.likes += 1
     comment.save()
     return Response(status=status.HTTP_200_OK)
