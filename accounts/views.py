@@ -2,8 +2,9 @@ from django.contrib.auth import user_logged_in
 
 # Create your views here.
 from django.http import HttpRequest
-from rest_framework import status
+from rest_framework import status, generics, viewsets, mixins
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -13,81 +14,37 @@ from jwtauth.models import RefreshToken
 from jwtauth.utils import *
 
 from accounts.models import User
-from accounts.serializer import UserSerializer
-from profilesettings.models import ProfileSettings, Avatar
+from accounts.serializer import UserSerializer, FollowersSerializer
+from profilesettings.models import ProfileSettings
 from profilesettings.serializer import ProfileSettingsSerializer
-from statistic.models import UserStatistics, Followers
-from statistic.serializer import UserStatisticsSerializer
+from statistic.models import Followers
+from djoser import permissions as dj_permissions
 
 
-@api_view(['GET', 'POST'])
-def profile(request: Request):
-    if request.method == 'POST':
-        user_id = request.data.get('id')
-        print('POST')
-    else:
-        access_token = request.headers.get('Access-Token')
-        user_id = get_user_id_from_payload(access_token)
+""" Создаем с помощью миксинов класс APIView с необходимыми нами методами """
+class CreateUpdateAPIView(mixins.CreateModelMixin, mixins.UpdateModelMixin, GenericAPIView):
 
-    profile_settings = ProfileSettings.objects.get(id=user_id)
-    avatar = Avatar.objects.get(id=profile_settings)
-    user_statistics = UserStatistics.objects.get(id=user_id)
+    def post(self, request, *args, **kwargs):
+        return self.create(request, *args, **kwargs)
 
-    profile_settings_serializer = ProfileSettingsSerializer(profile_settings)
-    user_statistics_serializer = UserStatisticsSerializer(user_statistics)
-
-    profile_data = {
-        'profile_settings': profile_settings_serializer.data,
-        'avatar_url': avatar.url,
-        'user_statistics': user_statistics_serializer.data
-    }
-
-    return Response(profile_data, status=status.HTTP_200_OK)
-
-@api_view(['POST'])
-def follow(request: Request):
-    to_follow_id = request.data.get('id')
-    access_token = request.headers.get('Access-Token')
-
-    to_follow_user = User.objects.get(id=to_follow_id)
-    follower = get_user_id_from_payload(access_token)
-    follower_user = User.objects.get(id=follower)
-
-    chain = Followers(user_id=to_follow_user, follower_id=follower_user)
-    chain.save()
-
-    return Response(status=status.HTTP_200_OK)
+    def put(self, request, *args, **kwargs):
+        return self.update(request, *args, **kwargs)
 
 
-@api_view(['POST'])
-@permission_classes([AllowAny, ])
-def register(request: Request):
-    user = request.data.get('user')
-    response = Response()
-    serializer = UserSerializer(data=user)
-    if serializer.is_valid():
-        saved_user: User = serializer.save()
-        UserStatistics.objects.create(id=saved_user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-    else:
-        return Response('User already register!', status=status.HTTP_409_CONFLICT)
+class CreateUpdateUserAPIView(CreateUpdateAPIView):
+    permission_classes = [AllowAny, ]
+    serializer_class = UserSerializer
+    model = User
 
-@api_view(['POST'])
-@permission_classes([AllowAny, ])
-def authenticate_user(request: Request):
-    try:
-        login = request.data.get('login')
-        password = request.data.get('password')
-        user = User.objects.get(login=login, password=password)
-        if user:
-            user_details = set_tokens_to_response(user)
-            data = {'id': user.id}
-            return Response(data, headers=user_details, status=status.HTTP_200_OK)
-        else:
-            res = {'error': 'can not authenticate with the given credentials or the account has been deactivated'}
-            return Response(res, status=status.HTTP_403_FORBIDDEN)
-    except KeyError:
-        res = {'error': 'please provide a email and a password'}
-        return Response(res)
+    """ Класс для определения permissions в зависимости от метода запроса"""
+    def get_permissions(self):
+        if self.request.method == 'PUT':
+            self.permission_classes = [IsAuthenticated, ]
+        return super().get_permissions()
+
+
+
+
+
 
 

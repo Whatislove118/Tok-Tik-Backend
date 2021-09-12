@@ -11,10 +11,13 @@ from .serializer import *
 from jwtauth.utils import get_user_id_from_payload
 
 
+def get_user_id_from_request(request):
+    access_token = request.headers.get('Access-Token')
+    return get_user_id_from_payload(access_token)
+
 @api_view(['POST'])
 def default_profile_settings(request: Request):
-    access_token = request.headers.get('Access-Token')
-    user_id = get_user_id_from_payload(access_token)
+    user_id = get_user_id_from_request(request)
     profile_settings_obj = ProfileSettings.objects.get(id=user_id)
     avatar_obj = Avatar(name='default_img', url='/static/default_img.png/', id=profile_settings_obj)
     avatar_obj.save()
@@ -28,9 +31,8 @@ def default_profile_settings(request: Request):
 
 @api_view(['PUT'])
 def profile_settings(request: Request):
-    access_token = request.headers.get('Access-Token')
+    user_id = get_user_id_from_request(request)
     profile_settings = request.data.get('profile-settings')
-    user_id = get_user_id_from_payload(access_token)
     serializer_profile_settings = ProfileSettingsSerializer(data=profile_settings)
 
     if serializer_profile_settings.is_valid():
@@ -49,8 +51,7 @@ def profile_settings(request: Request):
 @api_view(['PUT'])
 @parser_classes([MultiPartParser,])
 def avatar(request):
-    access_token = request.headers.get('Access-Token')
-    user_id = get_user_id_from_payload(access_token)
+    user_id = get_user_id_from_request(request)
     profile_settings = ProfileSettings.objects.get(id=user_id)
     avatar_img = request.data.get('avatar')
     data = {
@@ -58,13 +59,11 @@ def avatar(request):
     }
     avatar = Avatar(name=avatar_img, url=data.get('url'), id=profile_settings)
     avatar.save()
-    path = default_storage.save(os.path.join(settings.BASE_DIR)+'/static/{}/'.format(avatar_img), ContentFile(avatar_img.read()))
     return Response(data, status=status.HTTP_200_OK)
 
 @api_view(['PUT'])
 def confidentiality(request):
-    access_token = request.headers.get('Access-Token')
-    user_id = get_user_id_from_payload(access_token)
+    user_id = get_user_id_from_request(request)
     confidentiality = request.data.get('confidentiality')
     serializer_confidentiality = ConfidentialitySerializer(data=confidentiality)
     if serializer_confidentiality.is_valid():
@@ -76,15 +75,13 @@ def confidentiality(request):
             'allow_likes_list_looking': serializer_confidentiality.data.get('allow_likes_list_looking'),
         }
         confidentiality = Confidentiality.objects.get(id=user_id)
-        saved_confidentiality = serializer_confidentiality.update(confidentiality, data)
     return Response(status=status.HTTP_200_OK)
 
 @api_view(['PUT'])
 def security(request):
-    access_token = request.headers.get('Access-Token')
+    user_id = get_user_id_from_request(request)
     security = request.data.get('security')
     serializer_security = SecuritySerializer(data=security)
-    user_id = get_user_id_from_payload(access_token)
     if serializer_security.is_valid():
         data = {
             'two_step_verification': serializer_security.data.get('two_step_verification'),

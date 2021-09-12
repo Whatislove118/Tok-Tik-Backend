@@ -9,13 +9,15 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
-
+from datetime import timedelta
 from pathlib import Path
 import os
 import dj_database_url
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+from django.conf import settings
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -88,18 +90,19 @@ INSTALLED_APPS = [
     'jwtauth',
     'profilesettings',
     'statistic',
-    'video'
+    'video',
+    'djoser',
+    'drf_yasg'
 
 
 ]
 
 
-# REST_FRAMEWORK = {
-#   'DEFAULT_AUTHENTICATION_CLASSES': (
-#     'rest_framework_simplejwt.authentication.JWTAuthentication',
-#     #'rest_framework_jwt.authentication.JSONWebTokenAuthentication',
-#   ),
-# }
+REST_FRAMEWORK = {
+  'DEFAULT_AUTHENTICATION_CLASSES': (
+    'rest_framework_simplejwt.authentication.JWTAuthentication',
+  ),
+}
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -110,8 +113,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'jwtauth.jwt_valid_middleware.ValidJWTMiddleware',
-    'jwtauth.jwt_ias_middleware.IasJWTMiddleware',
+    # 'jwtauth.jwt_valid_middleware.ValidJWTMiddleware',
+    # 'jwtauth.jwt_ias_middleware.IasJWTMiddleware',
 ]
 
 
@@ -142,12 +145,12 @@ WSGI_APPLICATION = 'Tik_Tok.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'studs',
-        'USER': 's263069',
-        'PASSWORD': 'jfl392',
-        'HOST': '127.0.0.1',
-        'PORT': '5500'
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'db.sqlite3',
+        # 'USER': 's263069',
+        # 'PASSWORD': 'jfl392',
+        # 'HOST': '127.0.0.1',
+        # 'PORT': '5500'
     }
 }
 
@@ -186,3 +189,60 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
      os.path.join(BASE_DIR, 'static')
 ]
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
+
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': settings.SECRET_KEY,
+    'VERIFYING_KEY': None,
+    'AUDIENCE': None,
+    'ISSUER': None,
+    'JWK_URL': None,
+    'LEEWAY': 0,
+
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
+
+    'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.AccessToken',),
+    'TOKEN_TYPE_CLAIM': 'token_type',
+
+    'JTI_CLAIM': 'jti',
+}
+
+# DJOSER SETTINGS
+DEFAULT_USER_SERIALIZER = 'users.serializers.CustomUserSerializer'
+DJOSER = {
+    'PASSWORD_RESET_CONFIRM_URL': '#/password/reset/confirm/{uid}/{token}',
+    'USERNAME_RESET_CONFIRM_URL': '#/username/reset/confirm/{uid}/{token}',
+    'ACTIVATION_URL': '#/activate/{uid}/{token}',
+    'SEND_ACTIVATION_EMAIL': False,
+    'SEND_CONFIRMATION_EMAIL': False,
+    'SET_PASSWORD_RETYPE': False,
+    # 'SERIALIZERS': {
+    #     'user_create': DEFAULT_USER_SERIALIZER,  # checked
+    #     'user': DEFAULT_USER_SERIALIZER,  # checked
+    #     'current_user': DEFAULT_USER_SERIALIZER,  # checked
+    #     'activation': 'djoser.serializers.ActivationSerializer',  # checked
+    #     'password_reset': 'djoser.serializers.SendEmailResetSerializer', # checked
+    #     'password_reset_confirm': 'djoser.serializers.PasswordResetConfirmSerializer', # checked
+    #     'password_reset_confirm_retype': 'djoser.serializers.PasswordResetConfirmRetypeSerializer',
+    #     'set_password': 'djoser.serializers.SetPasswordSerializer', # checked
+    #     'set_password_retype': 'djoser.serializers.SetPasswordRetypeSerializer',
+    #     'set_username': 'djoser.serializers.SetUsernameSerializer',# checked
+    #     'set_username_retype': 'djoser.serializers.SetUsernameRetypeSerializer',
+    #     'username_reset': 'djoser.serializers.SendEmailResetSerializer',# checked
+    #     'username_reset_confirm': 'djoser.serializers.UsernameResetConfirmSerializer',# checked
+    #     'username_reset_confirm_retype': 'djoser.serializers.UsernameResetConfirmRetypeSerializer',# checked
+    #     'user_create_password_retype': 'djoser.serializers.UserCreatePasswordRetypeSerializer',# checked
+    #     'user_delete': 'djoser.serializers.UserDeleteSerializer',# checked
+    #
+    # }
+}

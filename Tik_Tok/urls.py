@@ -15,7 +15,26 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from drf_yasg import openapi
+from drf_yasg.views import get_schema_view
+from rest_framework import permissions
 from rest_framework_simplejwt import views as jwt_views
+
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title='Flower Market API',
+        default_version='v1',
+        description='API for flower market site',
+        terms_of_service="https://www.google.com/policies/terms/",
+        contact=openapi.Contact(email="pochikalin@gmail.com"),
+        license=openapi.License(name="BSD License"),
+    ),
+    public=True,
+    permission_classes=[permissions.AllowAny, ]
+)
+
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -23,7 +42,7 @@ urlpatterns = [
     path('users/profile/settings/', include('profilesettings.urls')),
     path('users/', include('accounts.urls')),
     path('video/', include('video.urls')),
-
+    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     # path('api/token/', jwt_views.TokenObtainPairView.as_view(), name='token_obtain_pair'),
     # path('api/token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
 ]

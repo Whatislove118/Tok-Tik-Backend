@@ -1,11 +1,9 @@
-from django.urls import path
+from django.urls import path, include
 
-from accounts.views import register, authenticate_user, profile, follow
+from accounts.views import CreateUpdateUserAPIView
 
 urlpatterns = [
-    path('', register),
-    path('auth/', authenticate_user),
-    path('profile/', profile),
-    path('follow/', follow)
+    path('', CreateUpdateUserAPIView.as_view(), name='register'),
+    path('auth/', include('djoser.urls.jwt')),
 
 ]
