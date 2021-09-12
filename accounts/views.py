@@ -14,7 +14,7 @@ from jwtauth.models import RefreshToken
 from jwtauth.utils import *
 
 from accounts.models import User
-from accounts.serializer import UserSerializer, FollowersSerializer
+from accounts.serializer import UserSerializer
 from profilesettings.models import ProfileSettings
 from profilesettings.serializer import ProfileSettingsSerializer
 from statistic.models import Followers
